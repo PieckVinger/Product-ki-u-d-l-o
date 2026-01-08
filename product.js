@@ -84,3 +84,5 @@ ipcMain.on('notify',async(event,data)=>{
   fs.writeFileSync(filePath,JSON.stringify(jsonData,null,2),'utf8');
 });
 app.whenReady().then(createWindow);
+
+//console.log("hâu lê")
