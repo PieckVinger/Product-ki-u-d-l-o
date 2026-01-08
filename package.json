@@ -1,0 +1,24 @@
+{
+  "name": "alertdata",
+  "version": "1.0.0",
+  "main": "product.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.ytb1.notify",
+    "productName": "YT Alert App",
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "node-notifier": "^10.0.1",
+    "puppeteer": "^24.34.0"
+  }
+}
