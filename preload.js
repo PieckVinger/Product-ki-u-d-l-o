@@ -1,4 +1,6 @@
-const {ipcRenderer}=require('electron');
+const {ipcRenderer,contextBridge}=require('electron');
+
+contextBridge.exposeInMainWorld('electron',{send:(channel,data)=>ipcRenderer.send(channel,data)});
 
 function isValidSelector(slt){
   try{
@@ -30,9 +32,9 @@ function getValueInput(array,dom){
   return null;
 }
 
-function getDataArray(){
+function getDataArray_Niflheimworld(hostname){
   let boxes=document.querySelectorAll(".structItemContainer-group .structItemContainer .structItem");
-  if(!boxes.length){return []}
+  if(!boxes.length){return [{hostname:hostname}]}
   let arr=[];
   for(let i=0;i<boxes.length;i++){
     let ob={};
@@ -55,7 +57,21 @@ function getDataArray(){
   return arr;
 }
 
-setInterval(() => {
+function getDataArray_Sinister(hostname){
+  let boxes=document.querySelectorAll(".forumdisplay_threadlist .inline_row");
+}
+
+function send(){
+  let hostname=window.location.hostname;
+  let dataArray;
+  if(hostname=='niflheim.world'){dataArray=getDataArray_Niflheimworld(hostname)}
+  else{dataArray=[{error:"Chưa thêm hostname vào danh sách"}]}
+  ipcRenderer.send('notify',dataArray);
+}
+
+if(location.protocol==='data:'){return}
+
+setInterval(()=>{
   if(document.getElementById('__electron_box__')){return}
 
   let box=document.createElement('div');
@@ -70,14 +86,15 @@ setInterval(() => {
   box.style.boxShadow='0 4px 10px rgba(0,0,0,0.2)';
 
   let btn1=document.createElement('button');
-  btn1.innerText='Button 1';
+  btn1.innerText='Lưu';
+  btn1.style.padding='20px'
   btn1.onclick=()=>send();
-  
-  box.append(btn1);
+  box.appendChild(btn1);
+
+  let switchBtn=document.createElement('button');
+  switchBtn.innerText='Đổi nguồn';
+  switchBtn.onclick=()=>{ipcRenderer.send('open-source-selector')};
+  box.appendChild(switchBtn);
+
   document.body.appendChild(box);
 },1000);
-
-function send(){
-  let dataArray=getDataArray();
-  ipcRenderer.send('notify',dataArray);
-}

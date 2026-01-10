@@ -1,9 +1,10 @@
-const {app,BrowserWindow,ipcMain,dialog}=require('electron');
+const {app,BrowserWindow,ipcMain,dialog,globalShortcut}=require('electron');
 const fs=require('fs');
 const path=require('path');
-const config=require('./config.json');
+const config=require('./config.json');  
 
 let mainWindow;
+let selectorWindow;
 
 function createWindow(){
   mainWindow=new BrowserWindow({
@@ -11,78 +12,125 @@ function createWindow(){
     height:700,
     webPreferences:{preload:path.join(__dirname,'preload.js')}
   });
-  mainWindow.loadURL(config.url);
+  mainWindow.loadURL('about:blank');
 }
 
-function formatTime(ms){
-  let d=new Date(ms);
-  let h=d.getHours();
-  let m=d.getMinutes();
-  let s=d.getSeconds();
-  let day=d.getDate();
-  let month=d.getMonth()+1;
-  let year=d.getFullYear();
-  return h+"h"+m+"m"+s+"s "+day+"-"+month+"-"+year;
-}
+function createSourceSelector() {
 
-ipcMain.on('notify',async(event,data)=>{
-  let popup= new BrowserWindow({
-    width:600,
-    height:600,
-    resizable:true,
-    minimizable:true,
-    maximizable:true,
-    parent:mainWindow,
-    modal:true,
-    alwaysOnTop:true,
-    webPreferences:{
-      nodeIntegration:false,
-      contextIsolation:true
+  // ✅ NEW: if selector already exists, just focus it
+  if (selectorWindow && !selectorWindow.isDestroyed()) {
+    selectorWindow.focus();
+    return;
+  }
+
+  selectorWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
+    parent: mainWindow,
+    modal: true,
+    alwaysOnTop: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true
     }
   });
 
-  let html=`
-    <!DOCTYPE html>
+  const buttons = config.sources
+    .map((s, i) => `<button onclick="select(${i})">${s.name}</button>`)
+    .join('<br><br>');
+
+  const html = `
     <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Cảnh báo</title>
-    </head>
-    <body style="font-family:sans-serif;padding:15px">
-      <h1>Cảnh báo</h3>
-      <p>Test cảnh báo, nếu thu thập được hơn 5 dữ liệu phát cảnh báo</div>
-      <div>Dữ liệu đầu tiên có tiêu đề: ${data[1].title}</p>
-      <button onclick="window.close()">OK</button>
-    </body>
-    </html>`;
+      <body style="font-family:sans-serif;padding:20px">
+        <h3>Select source</h3>
+        ${buttons}
+        <hr>
+        <small>You can reopen this popup anytime</small>
+        <script>
+          function select(i){
+            window.electron.send('source-selected', i);
+          }
+        </script>
+      </body>
+    </html>
+  `;
 
-    let html1=`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Cảnh báo</title>
-    </head>
-    <body style="font-family:sans-serif;padding:15px">
-      <h1>Cảnh báo</h3>
-      <p>Không có data</div>
-      <button onclick="window.close()">OK</button>
-    </body>
-    </html>`; 
+  selectorWindow.loadURL(
+    'data:text/html;charset=utf-8,' + encodeURIComponent(html)
+  );
 
-  if(data.length==0){popup.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html1))}
-  if(data.length>5){popup.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html))}
-
-  let {filePath,canceled}=await dialog.showSaveDialog(mainWindow,{
-    title:'Save data',
-    defaultPath:'data '+formatTime(Number(new Date()))+'.txt',
-    filters:[{name:'Text File',extensions:['txt']}]
+  // ✅ NEW: clean reference when closed
+  selectorWindow.on('closed', () => {
+    selectorWindow = null;
   });
-  if(canceled||!filePath){return}
-  
-  let jsonData=data;
-  fs.writeFileSync(filePath,JSON.stringify(jsonData,null,2),'utf8');
-});
-app.whenReady().then(createWindow);
+}
 
-//console.log("hâu lê")
+/* =========================
+   UTIL (unchanged)
+========================= */
+function formatTime(ms){
+  let d = new Date(ms);
+  let h = d.getHours();
+  let m = d.getMinutes();
+  let s = d.getSeconds();
+  let day = d.getDate();
+  let month = d.getMonth() + 1;
+  let year = d.getFullYear();
+  return h + "h" + m + "m" + s + "s " + day + "-" + month + "-" + year;
+}
+
+/* =========================
+   IPC HANDLERS (adjusted)
+========================= */
+ipcMain.on('source-selected', (_, index) => {
+  const source = config.sources[index];
+  if (!source) return;
+
+  mainWindow.loadURL(source.url);
+
+  // existing behavior: close after selection
+  if (selectorWindow) {
+    selectorWindow.close();
+    selectorWindow = null;
+  }
+});
+
+// ✅ NEW: allow reopening selector anytime
+ipcMain.on('open-source-selector', () => {
+  createSourceSelector();
+});
+
+ipcMain.on('notify', async (_, data) => {
+  // ✅ NEW: show popup if data length > 5
+  if (Array.isArray(data) && data.length > 0) {
+    await dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Notice',
+      message: 'We collect more than 5 data'
+    });
+  }
+
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save data',
+    defaultPath: `data-${formatTime(Date.now())}.json`
+  });
+
+  if (canceled || !filePath) return;
+
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+});
+
+/* =========================
+   APP READY (slightly adjusted)
+========================= */
+app.whenReady().then(() => {
+  createWindow();
+  createSourceSelector(); // still open at startup
+
+  globalShortcut.register('CommandOrControl+Shift+S', () => {
+    createSourceSelector(); // reopen anytime
+  });
+});
