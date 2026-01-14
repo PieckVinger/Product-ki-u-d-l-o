@@ -34,7 +34,7 @@ function getValueInput(array,dom){
 
 function getDataArray_Niflheimworld(hostname){
   let boxes=document.querySelectorAll(".structItemContainer-group .structItemContainer .structItem");
-  if(!boxes.length){return [{hostname:hostname}]}
+  if(!boxes.length){return [{hostname:hostname,message:"Chưa đúng cấu hình kéo dữ liệu"}]}
   let arr=[];
   for(let i=0;i<boxes.length;i++){
     let ob={};
@@ -57,15 +57,51 @@ function getDataArray_Niflheimworld(hostname){
   return arr;
 }
 
-function getDataArray_Sinister(hostname){
-  let boxes=document.querySelectorAll(".forumdisplay_threadlist .inline_row");
+function getDataArray_DarkForums(hostname){
+  let boxes=document.querySelectorAll(".forum-display__thread-list .inline_row");
+  if(!boxes.length){return [{hostname:hostname,message:"Trang này chưa đúng cấu hình kéo dữ liệu"}]}
+  let arr=[];
+  for(let i=0;i<boxes.length;i++){
+    let ob={};
+    try{ob.title=boxes[i].querySelector(".subject_new").innerText.trim()}
+    catch{ob.title="Lỗi title"}
+
+    try{ob.url=boxes[i].querySelector(".subject_new a").href.trim()}
+    catch{ob.url="Lỗi url"}
+
+    try{ob.author=boxes[i].querySelector(".author").innerText.trim()}
+    catch{ob.author="Lỗi author"}
+      
+    try{
+      let str=boxes[i].querySelector(".forum-display__thread-date").innerText.trim().split("-");
+      ob.published=Number(new Date([str[1],str[0],...str.slice(2)].join("-")))
+    }
+    catch{ob.published="Lỗi published"}
+      
+    try{
+      ob.tags=Array.from(boxes[i].querySelectorAll(".rf_tprefix")).map(n=>n.innerText.trim());
+      if(ob.tags.length==0){
+        let ctn=document.querySelectorAll(".breadcrumb__main.nav.talign-mleft li[class*='breadcrumb']");
+        let tags=[];
+        for(var j=0;j<ctn.length;j++){
+          let tag=ctn[j].innerText.trim();;
+          tags.push(tag);
+        }
+        ob.tags=tags;
+      }
+    }
+    catch{ob.tags=[]}
+    arr.push(ob);
+  }
+  return arr;
 }
 
 function send(){
   let hostname=window.location.hostname;
   let dataArray;
   if(hostname=='niflheim.world'){dataArray=getDataArray_Niflheimworld(hostname)}
-  else{dataArray=[{error:"Chưa thêm hostname vào danh sách"}]}
+  else if(hostname=='darkforums.io'){dataArray=getDataArray_DarkForums(hostname)}
+  else{dataArray=[{error:"Chưa thêm hostname '"+hostname+"' vào danh sách"}]}
   ipcRenderer.send('notify',dataArray);
 }
 
@@ -95,6 +131,21 @@ setInterval(()=>{
   switchBtn.innerText='Đổi nguồn';
   switchBtn.onclick=()=>{ipcRenderer.send('open-source-selector')};
   box.appendChild(switchBtn);
+
+  let navBar=document.createElement('div');
+  navBar.style.marginTop='10px';
+  let makeBtn=(text,fn)=>{
+    let btnmake=document.createElement('button');
+    btnmake.innerText=text;
+    btnmake.style.marginRight='5px';
+    btnmake.onclick=fn;
+    return b;
+  };
+  navBar.appendChild(makeBtn('←',()=>ipcRenderer.send('nav-back')));
+  navBar.appendChild(makeBtn('→',()=>ipcRenderer.send('nav-forward')));
+  navBar.appendChild(makeBtn('⟳',()=>ipcRenderer.send('nav-forward')));
+
+  box.appendChild(navBar);
 
   document.body.appendChild(box);
 },1000);
