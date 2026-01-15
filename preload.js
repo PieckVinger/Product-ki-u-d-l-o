@@ -2,6 +2,12 @@ const {ipcRenderer,contextBridge}=require('electron');
 
 contextBridge.exposeInMainWorld('electron',{send:(channel,data)=>ipcRenderer.send(channel,data)});
 
+const isSelectorWindow=process.argv.includes('--window=selector');
+if(isSelectorWindow){return}
+
+let kwMail=['mail','gmail','email','e'];
+let kwVn=['vietnam','viet nam','việt nam','vn'];
+
 function isValidSelector(slt){
   try{
     document.querySelector(slt);
@@ -31,6 +37,8 @@ function getValueInput(array,dom){
   }
   return null;
 }
+
+function countByKw(arr,f,kw){return arr.filter(o=>f.some(f=>kw.some(k=>o[f]?.toLowerCase().includes(k)))).length}
 
 function getDataArray_Niflheimworld(hostname){
   let boxes=document.querySelectorAll(".structItemContainer-group .structItemContainer .structItem");
@@ -102,10 +110,70 @@ function send(){
   if(hostname=='niflheim.world'){dataArray=getDataArray_Niflheimworld(hostname)}
   else if(hostname=='darkforums.io'){dataArray=getDataArray_DarkForums(hostname)}
   else{dataArray=[{error:"Chưa thêm hostname '"+hostname+"' vào danh sách"}]}
-  ipcRenderer.send('notify',dataArray);
+  ipcRenderer.send('download',dataArray);
 }
 
-if(location.protocol==='data:'){return}
+// setInterval(()=>{
+//   let hostname=window.location.hostname;
+//   if(hostname=='niflheim.world'){console.log("hello")}
+//   else if(hostname=='darkforums.io'){
+//     //alert("Hello");
+//     let dtar_DarkForums=getDataArray_DarkForums();
+//     //alert("dtar_DarkForums "+dtar_DarkForums);
+//     let notifyMail=countByKw(dtar_DarkForums,["title","url","author"],kwMail);
+//     if(notifyMail>0){ipcRenderer.send('notifymail',dtar_DarkForums)}
+//     let notifyVn=countByKw(dtar_DarkForums,["title","url","author"],kwVn);
+//     if(notifyVn>0){ipcRenderer.send('notifyvn',dtar_DarkForums)}
+//   }
+//   else{console.log("else init")}
+// },5_000)
+
+// preload.js
+
+let warningInterval = null;
+
+function startWarningInterval() {
+  if (warningInterval) return;
+
+  warningInterval = setInterval(() => {
+    const hostname = window.location.hostname;
+    if (hostname !== 'darkforums.io') return;
+
+    const data = getDataArray_DarkForums();
+
+    const notifyMail = countByKw(data, ["title","url","author"], kwMail);
+    if (notifyMail > 0) {
+      ipcRenderer.send('notifymail', data);
+    }
+
+    const notifyVn = countByKw(data, ["title","url","author"], kwVn);
+    if (notifyVn > 0) {
+      ipcRenderer.send('notifyvn', data);
+    }
+  }, 5_000);
+}
+
+function stopWarningInterval() {
+  if (warningInterval) {
+    clearInterval(warningInterval);
+    warningInterval = null;
+    console.warn('[WARN] Warning interval stopped');
+  }
+}
+
+startWarningInterval();
+
+ipcRenderer.on('stop-warning-interval', () => {
+  stopWarningInterval();
+});
+
+ipcRenderer.on('resume-warning-interval', () => {
+  startWarningInterval();
+  console.warn('[WARN] Warning interval resumed');
+});
+
+
+if(location.protocol==='data:'&&!location.href.includes('source-selector')){return}
 
 setInterval(()=>{
   if(document.getElementById('__electron_box__')){return}
@@ -139,7 +207,7 @@ setInterval(()=>{
     btnmake.innerText=text;
     btnmake.style.marginRight='5px';
     btnmake.onclick=fn;
-    return b;
+    return btnmake;
   };
   navBar.appendChild(makeBtn('←',()=>ipcRenderer.send('nav-back')));
   navBar.appendChild(makeBtn('→',()=>ipcRenderer.send('nav-forward')));
