@@ -75,6 +75,8 @@ function formatTime(ms){
   return h+"h"+m+"m"+s+"s "+day+"-"+month+"-"+year;
 }
 
+ipcMain.on('get-config',(event)=>{event.reply('get-config-reply',config)});
+
 ipcMain.on('nav-back',()=>{if(mainWindow.webContents.canGoBack()){mainWindow.webContents.goBack()}});
 
 ipcMain.on('nav-forward',()=>{if(mainWindow.webContents.canGoForward()){mainWindow.webContents.goForward()}});
@@ -106,41 +108,29 @@ ipcMain.on('notify',async(_,data)=>{
   }
 });
 
-ipcMain.on('notifymail', async (_, data) => {
-  if (isWarningOpen) {
+ipcMain.on('notifymail',async(_,data)=>{
+  if(isWarningOpen){
     mainWindow.webContents.send('stop-warning-interval');
-
-    await dialog.showMessageBox(mainWindow, {
-      type: 'warning',
-      title: 'Cảnh báo',
-      message: '⚠️ Một cảnh báo khác vẫn đang hiển thị. Interval đã bị dừng.'
+    await dialog.showMessageBox(mainWindow,{
+      type:'warning',
+      title:'Cảnh báo',
+      message:'Một cảnh báo khác vẫn đang hiển thị. Interval đã bị dừng.'
     });
-
     mainWindow.webContents.send('resume-warning-interval');
     return;
   }
-
-  const countDt = Array.isArray(data) ? data.length : 0;
-  if (countDt <= 0) return;
-
-  isWarningOpen = true;
-
+  let countDt=Array.isArray(data)?data.length:0;
+  if(countDt<=0){return}
+  isWarningOpen=true;
   mainWindow.webContents.send('stop-warning-interval');
-
-  await dialog.showMessageBox(mainWindow, {
-    type: 'warning',
-    title: 'Cảnh báo',
-    message:
-      'Đã thu thập được ' +
-      countDt +
-      ' data liên quan đến bộ từ khóa về "mail"'
+  await dialog.showMessageBox(mainWindow,{
+    type:'warning',
+    title:'Cảnh báo',
+    message:'Trang này hiện có '+countDt +' data liên quan đến bộ từ khóa về "mail"\nLưu ý: Nếu trang hiện tại có data, 1 phút sẽ có cảnh báo này 1 lần'
   });
-
-  isWarningOpen = false;
-
+  isWarningOpen=false;
   mainWindow.webContents.send('resume-warning-interval');
 });
-
 
 ipcMain.on('notifyvn',async(_,data)=>{
   let countDt=Array.isArray(data)?data.length:0;
@@ -148,7 +138,7 @@ ipcMain.on('notifyvn',async(_,data)=>{
     await dialog.showMessageBox(mainWindow,{
       type:'warning',
       title:'Cảnh báo',
-      message:'Đã thu thập dc '+countDt+' data liên quan đến bộ từ khóa về "Việt Nam"'
+      message:'Trang này có '+countDt+' data liên quan đến bộ từ khóa về "Việt Nam"'
     });
   }
 });

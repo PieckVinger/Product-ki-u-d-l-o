@@ -1,10 +1,18 @@
 const {ipcRenderer,contextBridge}=require('electron');
 
-contextBridge.exposeInMainWorld('electron',{send:(channel,data)=>ipcRenderer.send(channel,data)});
+contextBridge.exposeInMainWorld('electron',{
+  send:(channel,data)=>ipcRenderer.send(channel,data),
+  on:(channel,fn)=>ipcRenderer.on(channel,(_,data)=>fn(data))
+});
+
+let config=null;
+ipcRenderer.send('get-config');
+ipcRenderer.on('get-config-reply',(_,data)=>{config=data});
 
 const isSelectorWindow=process.argv.includes('--window=selector');
 if(isSelectorWindow){return}
 
+let warningInterval=null;
 let kwMail=['mail','gmail','email','e'];
 let kwVn=['vietnam','viet nam','việt nam','vn'];
 
@@ -113,65 +121,33 @@ function send(){
   ipcRenderer.send('download',dataArray);
 }
 
-// setInterval(()=>{
-//   let hostname=window.location.hostname;
-//   if(hostname=='niflheim.world'){console.log("hello")}
-//   else if(hostname=='darkforums.io'){
-//     //alert("Hello");
-//     let dtar_DarkForums=getDataArray_DarkForums();
-//     //alert("dtar_DarkForums "+dtar_DarkForums);
-//     let notifyMail=countByKw(dtar_DarkForums,["title","url","author"],kwMail);
-//     if(notifyMail>0){ipcRenderer.send('notifymail',dtar_DarkForums)}
-//     let notifyVn=countByKw(dtar_DarkForums,["title","url","author"],kwVn);
-//     if(notifyVn>0){ipcRenderer.send('notifyvn',dtar_DarkForums)}
-//   }
-//   else{console.log("else init")}
-// },5_000)
-
-// preload.js
-
-let warningInterval = null;
-
-function startWarningInterval() {
-  if (warningInterval) return;
-
-  warningInterval = setInterval(() => {
-    const hostname = window.location.hostname;
-    if (hostname !== 'darkforums.io') return;
-
-    const data = getDataArray_DarkForums();
-
-    const notifyMail = countByKw(data, ["title","url","author"], kwMail);
-    if (notifyMail > 0) {
-      ipcRenderer.send('notifymail', data);
-    }
-
-    const notifyVn = countByKw(data, ["title","url","author"], kwVn);
-    if (notifyVn > 0) {
-      ipcRenderer.send('notifyvn', data);
-    }
-  }, 5_000);
+function startWarningInterval(){
+  if(warningInterval){return}
+  warningInterval=setInterval(async()=>{
+    let hostname=window.location.hostname;
+    let data=[];
+    if(hostname=='niflheim.world'){data=getDataArray_Niflheimworld(hostname)}
+    else if(hostname=='darkforums.io'){data=getDataArray_DarkForums(hostname)}
+    else{data=[]}
+    let notifyMail=countByKw(data,["title","url","author"],kwMail);
+    if(notifyMail>0){ipcRenderer.send('notifymail',data)}
+    let notifyVn=countByKw(data, ["title","url","author"],kwVn);
+    if(notifyVn>0){ipcRenderer.send('notifyvn',data)}
+  },60_000);
 }
 
-function stopWarningInterval() {
-  if (warningInterval) {
+function stopWarningInterval(){
+  if(warningInterval){
     clearInterval(warningInterval);
-    warningInterval = null;
-    console.warn('[WARN] Warning interval stopped');
+    warningInterval=null;
   }
 }
 
 startWarningInterval();
 
-ipcRenderer.on('stop-warning-interval', () => {
-  stopWarningInterval();
-});
+ipcRenderer.on('stop-warning-interval',()=>{stopWarningInterval()});
 
-ipcRenderer.on('resume-warning-interval', () => {
-  startWarningInterval();
-  console.warn('[WARN] Warning interval resumed');
-});
-
+ipcRenderer.on('resume-warning-interval',()=>{startWarningInterval()});
 
 if(location.protocol==='data:'&&!location.href.includes('source-selector')){return}
 
@@ -190,13 +166,15 @@ setInterval(()=>{
   box.style.boxShadow='0 4px 10px rgba(0,0,0,0.2)';
 
   let btn1=document.createElement('button');
-  btn1.innerText='Lưu';
+  btn1.innerText='Lưu data';
   btn1.style.padding='20px'
+  btn1.style.margin='10px';
   btn1.onclick=()=>send();
   box.appendChild(btn1);
 
   let switchBtn=document.createElement('button');
   switchBtn.innerText='Đổi nguồn';
+  switchBtn.style.margin='10px';
   switchBtn.onclick=()=>{ipcRenderer.send('open-source-selector')};
   box.appendChild(switchBtn);
 
@@ -205,7 +183,8 @@ setInterval(()=>{
   let makeBtn=(text,fn)=>{
     let btnmake=document.createElement('button');
     btnmake.innerText=text;
-    btnmake.style.marginRight='5px';
+    btnmake.style.margin='5px';
+    btnmake.style.padding='5px';
     btnmake.onclick=fn;
     return btnmake;
   };
