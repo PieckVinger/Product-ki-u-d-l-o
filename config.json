@@ -1,11 +1,21 @@
 {
   "sources":[
-    {"name":"Niflheim.world","url":"https://niflheim.world/forums/combolist.2/"},
-    {"name":"Dark Forums","url":"https://darkforums.io/Forum-Databases"},
-    {"name":"X Forums","url":"https://xforums.st"},
-    {"name":"Google","url":"https://google.com"},
-    {"name":"Github","url":"https://github.com"},
-    {"name":"Youtube","url":"https://www.youtube.com"},
-    {"name":"Thế giới di động","url":"https://www.thegioididong.com"}
+    {"name":"Niflheim.world","value":"https://niflheim.world/forums/combolist.2/","type":"url"},
+    {"name":"Dark Forums","value":"https://darkforums.io/Forum-Databases","type":"url"},
+    {"name":"X Forums","value":"https://xforums.st","type":"url"},
+    {"name":"Google","value":"https://google.com","type":"url"},
+    {"name":"Github","value":"https://github.com","type":"url"},
+    {"name":"Youtube","value":"https://www.youtube.com","type":"url"},
+    {"name":"Thế giới di động","value":"https://www.thegioididong.com","type":"url"},
+    {
+      "name": "Dashboard (Local)",
+      "type": "file",
+      "value": "index.html"
+    },
+    {
+      "name": "Thống kê",
+      "type": "file",
+      "value": "data.html"
+    }
   ]
 }

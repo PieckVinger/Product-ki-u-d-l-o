@@ -17,7 +17,7 @@ function createWindow(){
       contextIsolation:true
     }
   });
-  mainWindow.loadURL('about:blank');
+  mainWindow.loadFile(path.join(__dirname,'index.html'));
 }
 
 function createSourceSelector(){
@@ -84,11 +84,18 @@ ipcMain.on('nav-forward',()=>{if(mainWindow.webContents.canGoForward()){mainWind
 ipcMain.on('nav-reload',()=>{mainWindow.webContents.reload()});
 
 ipcMain.on('source-selected',(_,index)=>{
-  let source=config.sources[index];
+  const source=config.sources[index];
   if(!source){return}
-  mainWindow.loadURL(source.url);
-  try{currentHostname=new URL(source.url).hostname}
-  catch{currentHostname='unknown'}
+  if(source.type==='url'){
+    mainWindow.loadURL(source.value);
+    try{currentHostname=new URL(source.value).hostname}
+    catch{currentHostname='unknown'}
+  }
+  if(source.type==='file'){
+    const filePath=path.join(__dirname,'html',source.value);
+    mainWindow.loadFile(filePath);
+    currentHostname='local-file';
+  }
   if(selectorWindow){
     selectorWindow.close();
     selectorWindow=null;

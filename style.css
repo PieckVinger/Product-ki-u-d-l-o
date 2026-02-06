@@ -1,5 +1,18 @@
 .aie{align-items:end}
+.ail{align-items:left}
+.air{align-items:right}
 .aic{align-items:center}
+.ain{align-items:normal}
+.aib{align-items:baseline}
+.aise{align-items:safe end}
+.aife{align-items:flex-end}
+.aifs{align-items:flex-start}
+.aiss{align-items:safe start}
+.aisc{align-items:safe center}
+.ailb{align-items:last baseline}
+.asfe{align-items:safe flex-end}
+.aifb{align-items:first baseline}
+.asfs{align-items:safe flex-start}
 
 .aprn{appearance:none}
 
@@ -146,6 +159,10 @@
 .bdr23px{border-radius:23px}
 .bdr24px{border-radius:24px}
 .bdr25px{border-radius:25px}
+.bdr26px{border-radius:26px}
+.bdr27px{border-radius:27px}
+.bdr28px{border-radius:28px}
+.bdr29px{border-radius:29px}
 .bdr30px{border-radius:30px}
 .bdr40px{border-radius:40px}
 .bdr50px{border-radius:50px}
@@ -200,13 +217,53 @@
 .bdcl-e490b6{border-color:#e490b6}
 
 .b0{bottom:0}
+.b1pc{bottom:1%}
+.b2pc{bottom:2%}
+.b3pc{bottom:3%}
+.b4pc{bottom:4%}
+.b5pc{bottom:5%}
+.b6pc{bottom:6%}
+.b7pc{bottom:7%}
+.b8pc{bottom:8%}
+.b9pc{bottom:9%}
 .b10pc{bottom:10%}
+.b11pc{bottom:11%}
+.b12pc{bottom:12%}
+.b13pc{bottom:13%}
+.b14pc{bottom:14%}
+.b15pc{bottom:15%}
+.b16pc{bottom:16%}
+.b17pc{bottom:17%}
+.b18pc{bottom:18%}
+.b19pc{bottom:19%}
 .b20pc{bottom:20%}
+.b21pc{bottom:21%}
+.b22pc{bottom:22%}
+.b23pc{bottom:23%}
+.b24pc{bottom:24%}
+.b25pc{bottom:25%}
+.b26pc{bottom:26%}
+.b27pc{bottom:27%}
+.b28pc{bottom:28%}
+.b29pc{bottom:29%}
+.b30pc{bottom:30%}
+.b31pc{bottom:31%}
+.b32pc{bottom:32%}
+.b33pc{bottom:33%}
+.b34pc{bottom:34%}
+.b35pc{bottom:35%}
+.b36pc{bottom:36%}
+.b37pc{bottom:37%}
+.b38pc{bottom:38%}
+.b39pc{bottom:39%}
+.b40pc{bottom:40%}
+.b1px{bottom:1px}
 .b10px{bottom:10px}
-.b-100px{bottom:-100px}
 .b-125px{bottom:-125px}
+.b-100px{bottom:-100px}
 
 .bsbd{box-sizing:border-box}
+.bscb{box-sizing:content-box}
 
 .col-01{grid-template-columns:auto}
 .col-02{grid-template-columns:auto auto}
@@ -329,6 +386,7 @@
 .ff-nsjp-ss{font-family:"Noto Sans JP",sans-serif}
 .ff-rc-ss{font-family:"Roboto Condensed",sans-serif}
 
+.fs8px{font-size:8px}
 .fs9px{font-size:9px}
 .fs10px{font-size:10px}
 .fs11px{font-size:11px}
