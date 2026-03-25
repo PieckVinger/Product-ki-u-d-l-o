@@ -2,7 +2,9 @@ const {ipcRenderer,contextBridge}=require('electron');
 
 contextBridge.exposeInMainWorld('electron',{
   send:(channel,data)=>ipcRenderer.send(channel,data),
-  on:(channel,fn)=>ipcRenderer.on(channel,(_,data)=>fn(data))
+  on:(channel,fn)=>ipcRenderer.on(channel,(_,data)=>fn(data)),
+  listDataFiles: () => ipcRenderer.invoke('list-data-files'),
+  readDataFile:(filename)=>ipcRenderer.invoke('read-data-file',filename)
 });
 
 let config=null;
@@ -196,3 +198,4 @@ setInterval(()=>{
 
   document.body.appendChild(box);
 },1000);
+// 

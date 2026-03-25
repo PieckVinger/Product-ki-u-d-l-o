@@ -17,7 +17,7 @@ function createWindow(){
       contextIsolation:true
     }
   });
-  mainWindow.loadFile(path.join(__dirname,'index.html'));
+  mainWindow.loadFile(path.join(__dirname,'html','index.html'));
 }
 
 function createSourceSelector(){
@@ -74,6 +74,7 @@ function formatTime(ms){
   let year=d.getFullYear();
   return h+"h"+m+"m"+s+"s "+day+"-"+month+"-"+year;
 }
+
 
 ipcMain.on('get-config',(event)=>{event.reply('get-config-reply',config)});
 
@@ -150,14 +151,67 @@ ipcMain.on('notifyvn',async(_,data)=>{
   }
 });
 
-ipcMain.on('download',async(_,data)=>{
-  let countDt=Array.isArray(data)?data.length:0;
-  let {canceled,filePath}=await dialog.showSaveDialog(mainWindow,{
-    title:'Save data',
-    defaultPath:currentHostname+` `+countDt+`_data `+formatTime(Date.now())+`.txt`
+ipcMain.on('download', async (_, data) => {
+  let countDt = Array.isArray(data) ? data.length : 0;
+
+  const dataDir = path.join(__dirname, 'data');
+
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+  }
+
+  const fileName = currentHostname + ` ${countDt}_data ` + formatTime(Date.now()) + `.txt`;
+  const filePath = path.join(dataDir, fileName);
+
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+  // update modified time
+  fs.utimesSync(filePath, new Date(), new Date());
+
+  await dialog.showMessageBox(mainWindow, {
+    message: "Saved to /data folder",
   });
-  if(canceled||!filePath){return}
-  fs.writeFileSync(filePath,JSON.stringify(data,null,2));
+});
+
+ipcMain.handle('list-data-files', async () => {
+  const dataDir = path.join(__dirname, 'data');
+
+  try {
+    const files = fs.readdirSync(dataDir);
+
+    return files.map(f => {
+      const full = path.join(dataDir, f);
+      const stats = fs.statSync(full);
+
+      return {
+        name: f,
+        createdAt: stats.mtime.toISOString(), // ✅ USE THIS
+        modifiedAt: stats.mtime.toISOString()
+      };
+    });
+
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+});
+
+ipcMain.handle('read-data-file',async(_,filename)=>{
+  const filePath=path.join(__dirname,'data',filename);
+  try{
+    const raw=fs.readFileSync(filePath, 'utf-8');
+    try{
+      const parsed=JSON.parse(raw);
+      return {type:'json',data:parsed};
+    }
+    catch{
+      return{type:'text',data:raw};
+    }
+  }
+  catch(err){
+    console.error(err);
+    return{type:'error',error:'Cannot read file'};
+  }
 });
 
 app.whenReady().then(()=>{

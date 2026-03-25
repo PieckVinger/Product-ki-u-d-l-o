@@ -1,57 +1,260 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Bảng kê tổng hợp đơn hàng</title>
-    <style>
-        table.b1 th,table.b1 td{border: 1px solid #000}
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <link rel="stylesheet" href="../style.css">
+  <title>Thống kê</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .item { border-bottom:1px solid #ddd; padding: 8px 0; }
+    .title { font-weight: bold; }
+    pre { white-space: pre-wrap; }
+
+    #stats div {
+      margin: 4px 0;
+      font-weight: bold;
+    }
+  </style>
 </head>
-<body>
-    <div style="font-family:'Times New Roman';font-size:13pt">
-        <div style="padding:0">
-            <div style="text-align:center;font-weight:550">
-                <div style="text-transform:uppercase">cộng hòa xã hội chủ nghĩa việt nam</div>
-                <div style="margin-top:5px">Độc lập - Tự do - Hạnh phúc</div>
-                <div style="text-transform:uppercase;margin-top:20px">bảng kê tổng họ đơn hàng sản xuất ${province}</div>
-            </div>
-            <div style="margin-top:20px">
-                <div style="text-transform:uppercase;font-weight:550">Số: 17</div>
-                <div style="text-transform:uppercase;margin-top:5px;font-weight:550">Ngày ${tgPL}</div>
-                <div style="margin-top:5px">
-                    <table>
-                        <thead></thead>
-                        <tbody>
-                            <tr>
-                                <td style="width:175px;font-style:italic">Biển ô tô</td>
-                                <td style="text-align:center">${totalOto}</td>
-                            </tr>
-                            <tr>
-                                <td style="width:175px;font-style:italic">Biển XM</td>
-                                <td style="text-align:center">${totalXm}</td>
-                            </tr>
-                            <tr>
-                                <td style="width:175px;font-style:italic">Biển RM</td>
-                                <td style="text-align:center">${totalRm}</td>
-                            </tr>
-                            <tr>
-                                <td style="width:175px;font-style:italic">Biển CD</td>
-                                <td style="text-align:center">${totalCd}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div style="margin-top:20px;font-size:12pt">
-                <table class="b1" style="margin-top:50px;width:100%;text-align:center;border:1px solid #000;border-collapse:collapse">
-                    <thead>${tableHeader}</thead>
-                    <tbody>${orderRows}</tbody>
-                </table>
-            </div>
-            <div style="font-weight:550;margin-top:20px;text-align:right;margin-right:30px">Người lập</div>
-        </div>
-    </div>
+
+<body class="ff-ass p10">
+
+  <h1>Data files</h1>
+  <select id="fileSelect"></select>
+
+  <h2>Statistics</h2>
+  <div id="stats">
+    <div>Today: <span id="stat-today">0</span></div>
+    <div>This Week: <span id="stat-week">0</span></div>
+    <div>This Month: <span id="stat-month">0</span></div>
+    <div>Total Files: <span id="stat-files">0</span></div>
+  </div>
+
+  <canvas id="chart" height="100"></canvas>
+
+  <h2>Records</h2>
+  <div id="list"></div>
+
+  <script>
+    const fileSelect = document.querySelector('#fileSelect');
+    const list = document.getElementById('list');
+
+    let chart;
+
+    async function loadFiles() {
+      const files = await window.electron.listDataFiles();
+      alert(JSON.stringify(files, null, 2));
+      fileSelect.innerHTML = '';
+
+      if (!files || files.length === 0) {
+        list.innerText = 'No data files found';
+        return;
+      }
+
+      document.getElementById('stat-files').innerText = files.length;
+
+      files.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.name; // ✅ FIX
+        opt.innerText = f.name;
+        fileSelect.appendChild(opt);
+      });
+
+      // 👉 USE FILE TIME FOR STATS
+      processFileStats(files);
+
+      loadFile(files[0].name);
+    }
+
+    function processFileStats(files) {
+  const now = new Date();
+
+  let today = 0;
+  let week = 0;
+  let month = 0;
+
+  const dailyMap = {};
+
+  files.forEach(file => {
+    if (!file.createdAt) return;
+
+    const d = new Date(file.createdAt);
+    if (isNaN(d)) return; // ✅ IMPORTANT
+
+    // TODAY
+    if (d.toDateString() === now.toDateString()) {
+      today++;
+    }
+
+    // WEEK
+    const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+    if (diffDays >= 0 && diffDays <= 7) {
+      week++;
+    }
+
+    // MONTH
+    if (
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    ) {
+      month++;
+    }
+
+    // GRAPH
+    const key = d.toISOString().split('T')[0];
+    dailyMap[key] = (dailyMap[key] || 0) + 1;
+  });
+
+  document.getElementById('stat-today').innerText = today;
+  document.getElementById('stat-week').innerText = week;
+  document.getElementById('stat-month').innerText = month;
+
+  renderChart(dailyMap);
+}
+
+    async function loadFile(filename) {
+      const res = await window.electron.readDataFile(filename);
+      list.innerHTML = '';
+
+      if (res.type === 'error') {
+        list.innerText = res.error;
+        return;
+      }
+
+      if (res.type === 'text') {
+        const pre = document.createElement('pre');
+        pre.innerText = res.data;
+        list.appendChild(pre);
+        return;
+      }
+
+      if (res.type === 'json' && Array.isArray(res.data)) {
+
+
+        // 👉 Render records
+        res.data.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <div class="title">${item.title || '(no title)'}</div>
+      <div>Author: ${item.author || ''}</div>
+      <div>
+        <a href="${item.url || '#'}" target="_blank">${item.url || ''}</a>
+      </div>
+      <div>Tags: ${(item.tags || []).join(', ')}</div>
+      <div style="font-size:12px;color:gray;">
+        ${item.createdAt
+          ? new Date(item.createdAt).toLocaleString()
+          : item.published
+          ? new Date(item.published).toLocaleString()
+          : ''}
+      </div>
+    `;
+    list.appendChild(div);
+  });
+      }
+    }
+
+    function processStats(data) {
+      const now = new Date();
+
+      let today = 0;
+      let week = 0;
+      let month = 0;
+
+      const dailyMap = {};
+
+      data.forEach(item => {
+        const time = item.createdAt || item.published;
+if (!time) return;
+
+const d = new Date(time);
+
+        // Today
+        if (d.toDateString() === now.toDateString()) {
+  today++;
+}
+
+        // Week (last 7 days)
+        const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+
+if (diffDays >= 0 && diffDays <= 7) {
+  week++;
+}
+
+        // Month
+        if (
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        ) {
+          month++;
+        }
+
+        // Group by date
+        const key = d.toISOString().split('T')[0];
+        dailyMap[key] = (dailyMap[key] || 0) + 1;
+      });
+
+      // Update stats UI
+      document.getElementById('stat-today').innerText = today;
+      document.getElementById('stat-week').innerText = week;
+      document.getElementById('stat-month').innerText = month;
+
+      renderChart(dailyMap);
+    }
+
+    function renderChart(dailyMap) {
+      const ctx = document.getElementById('chart').getContext('2d');
+
+      const labels = Object.keys(dailyMap).sort();
+      const values = labels.map(k => dailyMap[k]);
+
+      if (chart) {
+        chart.destroy();
+      }
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Records per day',
+            data: values,
+            borderWidth: 2,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Date'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Count'
+              },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    fileSelect.addEventListener('change', e => {
+      loadFile(e.target.value);
+    });
+
+    loadFiles();
+  </script>
+
 </body>
 </html>

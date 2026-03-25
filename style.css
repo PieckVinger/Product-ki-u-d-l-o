@@ -207,6 +207,7 @@
 .bdl-1px-s-black{border-left:1px solid black}
 .bdl-150px-s-tr{border-left:150px solid transparent}
 .bdr-150px-s-tr{border-right:150px solid transparent}
+.bdb-1px-s-ddd{border-bottom:1px solid #ddd}
 .bdb-1px-s-e2d9f3{border-bottom:1px solid #e2d9f3}
 .bdb-2px-s-e2d9f3{border-bottom:2px solid #e2d9f3}
 .bdb-250px-s-d8c0ff{border-bottom:250px solid #d8c0ff}
@@ -752,6 +753,7 @@
 .p15{padding:15px}
 .p20{padding:20px}
 .p25{padding:25px}
+.p100{padding:100px}
 .p0_1rem{padding:0.1rem}
 .p0_2rem{padding:0.2rem}
 .p0_25rem{padding:0.25rem}
