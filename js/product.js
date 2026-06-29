@@ -1,7 +1,7 @@
 const {app,BrowserWindow,ipcMain,dialog,globalShortcut}=require('electron');
 const fs=require('fs');
 const path=require('path');
-const config=require('./config.json');  
+const config=require('../config.json');  
 
 let mainWindow;
 let selectorWindow;
@@ -17,7 +17,7 @@ function createWindow(){
       contextIsolation:true
     }
   });
-  mainWindow.loadFile(path.join(__dirname,'html','index.html'));
+  mainWindow.loadFile(path.join(__dirname,'..','html','index.html'));
 }
 
 function createSourceSelector(){
@@ -60,7 +60,7 @@ function createSourceSelector(){
         </script>
       </body>
     </html>`;
-  selectorWindow.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html),{baseURLForDataURL:`file://${__dirname}/`});
+  selectorWindow.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html),{baseURLForDataURL:`file://${path.join(__dirname,'..')}/`});
   selectorWindow.on('closed',()=>{selectorWindow=null});
 }
 
@@ -74,7 +74,6 @@ function formatTime(ms){
   let year=d.getFullYear();
   return h+"h"+m+"m"+s+"s "+day+"-"+month+"-"+year;
 }
-
 
 ipcMain.on('get-config',(event)=>{event.reply('get-config-reply',config)});
 
@@ -93,7 +92,7 @@ ipcMain.on('source-selected',(_,index)=>{
     catch{currentHostname='unknown'}
   }
   if(source.type==='file'){
-    const filePath=path.join(__dirname,'html',source.value);
+    const filePath=path.join(__dirname,'..','html',source.value);
     mainWindow.loadFile(filePath);
     currentHostname='local-file';
   }
@@ -151,10 +150,10 @@ ipcMain.on('notifyvn',async(_,data)=>{
   }
 });
 
-ipcMain.on('download', async (_, data) => {
+ipcMain.on('download',async(_, data)=>{
   let countDt = Array.isArray(data) ? data.length : 0;
 
-  const dataDir = path.join(__dirname, 'data');
+  const dataDir = path.join(__dirname,'..','data');
 
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir);
@@ -174,7 +173,7 @@ ipcMain.on('download', async (_, data) => {
 });
 
 ipcMain.handle('list-data-files', async () => {
-  const dataDir = path.join(__dirname, 'data');
+  const dataDir = path.join(__dirname,'..','data');
 
   try {
     const files = fs.readdirSync(dataDir);
@@ -197,7 +196,7 @@ ipcMain.handle('list-data-files', async () => {
 });
 
 ipcMain.handle('read-data-file',async(_,filename)=>{
-  const filePath=path.join(__dirname,'data',filename);
+  const filePath=path.join(__dirname,'..','data',filename);
   try{
     const raw=fs.readFileSync(filePath, 'utf-8');
     try{

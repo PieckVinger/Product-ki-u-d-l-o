@@ -1,21 +1,12 @@
 {
   "sources":[
-    {"name":"Niflheim.world","value":"https://niflheim.world/forums/combolist.2/","type":"url"},
-    {"name":"Dark Forums","value":"https://darkforums.io/Forum-Databases","type":"url"},
-    {"name":"X Forums","value":"https://xforums.st","type":"url"},
-    {"name":"Google","value":"https://google.com","type":"url"},
-    {"name":"Github","value":"https://github.com","type":"url"},
-    {"name":"Youtube","value":"https://www.youtube.com","type":"url"},
-    {"name":"Thế giới di động","value":"https://www.thegioididong.com","type":"url"},
-    {
-      "name": "Dashboard (Local)",
-      "type": "file",
-      "value": "index.html"
-    },
-    {
-      "name": "Thống kê",
-      "type": "file",
-      "value": "data.html"
-    }
+    {"name":"Niflheim.world","type":"url","value":"https://niflheim.world/forums/combolist.2/"},
+    {"name":"Niflheim.world search","type":"url","value":"https://niflheim.world/search/2582898/?q=Vietnam&c[newer_than]=2026-06-10&o=date"},
+    {"name":"Dark Forums","type":"url","value":"https://darkforums.su/Forum-Databases"},
+    {"name":"X Forums","type":"url","value":"https://xforums.st"},
+    {"name":"Google","type":"url","value":"https://google.com"},
+    {"name":"Youtube","type":"url","value":"https://www.youtube.com"},
+    {"name":"Dashboard (Local)","type":"file","value": "index.html"},
+    {"name": "Thống kê","type": "file","value": "data.html"}
   ]
 }

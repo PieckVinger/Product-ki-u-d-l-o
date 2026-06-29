@@ -114,11 +114,50 @@ function getDataArray_DarkForums(hostname){
   return arr;
 }
 
+function getDataArray_DarkForums1(hostname){
+  let boxes=document.querySelectorAll("#content .inline_row");
+  if(!boxes.length){return [{hostname:hostname,message:"Trang này chưa đúng cấu hình kéo dữ liệu"}]}
+  let arr=[];
+  for(let i=0;i<boxes.length;i++){
+    let ob={};
+    try{ob.title=boxes[i].querySelector(".subject_new").innerText.trim()}
+    catch{ob.title="Lỗi title"}
+
+    try{ob.url=boxes[i].querySelector(".subject_new a").href.trim()}
+    catch{ob.url="Lỗi url"}
+
+    try{ob.author=boxes[i].querySelector(".author").innerText.trim()}
+    catch{ob.author="Lỗi author"}
+      
+    try{
+      let str=boxes[i].querySelector(".forum-display__thread-date").innerText.trim().split("-");
+      ob.published=Number(new Date([str[1],str[0],...str.slice(2)].join("-")))
+    }
+    catch{ob.published="Lỗi published"}
+      
+    try{
+      ob.tags=Array.from(boxes[i].querySelectorAll(".rf_tprefix")).map(n=>n.innerText.trim());
+      if(ob.tags.length==0){
+        let ctn=document.querySelectorAll(".breadcrumb__main.nav.talign-mleft li[class*='breadcrumb']");
+        let tags=[];
+        for(var j=0;j<ctn.length;j++){
+          let tag=ctn[j].innerText.trim();;
+          tags.push(tag);
+        }
+        ob.tags=tags;
+      }
+    }
+    catch{ob.tags=[]}
+    arr.push(ob);
+  }
+  return arr;
+}
+
 function send(){
   let hostname=window.location.hostname;
   let dataArray;
   if(hostname=='niflheim.world'){dataArray=getDataArray_Niflheimworld(hostname)}
-  else if(hostname=='darkforums.io'){dataArray=getDataArray_DarkForums(hostname)}
+  else if(hostname=='darkforums.su'){dataArray=getDataArray_DarkForums(hostname)}
   else{dataArray=[{error:"Chưa thêm hostname '"+hostname+"' vào danh sách"}]}
   ipcRenderer.send('download',dataArray);
 }
@@ -129,7 +168,7 @@ function startWarningInterval(){
     let hostname=window.location.hostname;
     let data=[];
     if(hostname=='niflheim.world'){data=getDataArray_Niflheimworld(hostname)}
-    else if(hostname=='darkforums.io'){data=getDataArray_DarkForums(hostname)}
+    else if(hostname=='darkforums.su'){data=getDataArray_DarkForums(hostname)}
     else{data=[]}
     let notifyMail=countByKw(data,["title","url","author"],kwMail);
     if(notifyMail>0){ipcRenderer.send('notifymail',data)}
@@ -192,10 +231,9 @@ setInterval(()=>{
   };
   navBar.appendChild(makeBtn('←',()=>ipcRenderer.send('nav-back')));
   navBar.appendChild(makeBtn('→',()=>ipcRenderer.send('nav-forward')));
-  navBar.appendChild(makeBtn('⟳',()=>ipcRenderer.send('nav-forward')));
+  navBar.appendChild(makeBtn('⟳',()=>ipcRenderer.send('nav-reload')));
 
   box.appendChild(navBar);
 
   document.body.appendChild(box);
 },1000);
-// 

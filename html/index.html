@@ -47,7 +47,7 @@
 
     async function loadFiles() {
       const files = await window.electron.listDataFiles();
-      alert(JSON.stringify(files, null, 2));
+      //alert(JSON.stringify(files, null, 2));
       fileSelect.innerHTML = '';
 
       if (!files || files.length === 0) {

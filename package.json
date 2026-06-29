@@ -1,7 +1,7 @@
 {
   "name": "alertdata",
   "version": "1.0.0",
-  "main": "product.js",
+  "main": "js/product.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder"
